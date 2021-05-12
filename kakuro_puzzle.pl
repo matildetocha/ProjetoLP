@@ -144,7 +144,8 @@ comuns([P | Perms], Res) :-
 % ----------------------------------------------------------------------
 numeros_comuns(Lst_Perms, Numeros_comuns) :-
     comuns(Lst_Perms, Aux),
-    length(Aux, N), N < 2,     
+    length(Lst_Perms, Len_Perms), length(Aux, Len_Comuns),
+    Limite is Len_Perms - 1,  Len_Comuns < Limite,           % basta 1 falhar para nao ter numeros comuns. 
     Numeros_comuns = [], !.
 
 numeros_comuns(Lst_Perms, Numeros_comuns) :-
