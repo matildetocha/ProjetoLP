@@ -85,10 +85,19 @@ espaco_fila1(Fila, Esp, H_V) :-
     Esp = Mem.
 
 % ------------------------------------------------------------------------------
-%numeros_comuns([P | R], Numeros_comuns) :-
-%    length(P, N),
-%    findall((Pos, Candidato), 
-%    (between(1, N, Pos), nth1(_, P, Num), nth1(_, Mem, Candidato),
-%    Num == Candidato),
-%    Numeros_comuns).
+Puzzle = [[[0, 0], [0, 0], [0, 0], [17, 0], [10, 0]],
+		 [[0, 0], [24, 0], [11, 3], P24, P25], 
+         [[0,16], P32, P33, P34, P35],
+		 [[0,26], P42, P43, P44, P45],
+         [[0,17], P52, P53, [0,0], [0,0]]],
+         espacos_puzzle(Puzzle, Espacos),
+nth1(1, Espacos, Esp1),
+espacos_com_posicoes_comuns(Espacos, Esp1, Esps_com).
+
+Espacos = [espaco(3, [P24, P25]), espaco(16, [P32, P33, P34, P35]), 
+        espaco(26, [P42, P43, P44, P45]), espaco(17, [P52, P53]),
+        espaco(24, [P32, P42, P52]), espaco(11, [P33, P43, P53]), 
+        espaco(17, [P24, P34, P44]), espaco(10, [P25, P35, P45])],
+Esp1 = espaco(3, [P24, P25]),
+espacos_com_posicoes_comuns(Espacos, Esp1, Esps_com).
 
