@@ -2,6 +2,9 @@
 
 :- [codigo_comum].
 
+
+% :::::::::::::::: PREDICADOS PARA A INICIALIZACAO DE PUZZLES :::::::::::::::: %                 
+
 % -----------------------------------------------------------------------------
 %                           combinacoes_soma
 % -----------------------------------------------------------------------------  
@@ -287,16 +290,6 @@ inters_atual([], Poss, Poss).
 inters_atual(Inters, Atual, _) :- nth0(0, Inters, Atual).
 
 % -----------------------------------------------------------------------------
-%                           intersecao_permutacoes/2
-% Predicado Auxiliar.
-% Significa que Res eh a lista final de permutacoes possiveis para o espaco Esp.
-% -----------------------------------------------------------------------------  
-intersecao_permutacoes([Poss], [], [Poss]). 
-
-intersecao_permutacoes(Poss, Inters, Res) :-
-    intersection(Poss, Inters, Res).
-
-% -----------------------------------------------------------------------------
 %                           percorre_perms_soma/4
 % Predicado Auxiliar.
 % Significa que Res eh a lista de todas as possiveis permutacoes para o espaco
@@ -312,8 +305,7 @@ percorre_perms_soma(Pos_Esp, [Pos | Pos_Comuns], Perms_soma, Res, Inters) :-
     nth0(0, Candidato, espaco(_, Vars_Cand)), nth0(0, Perm_Soma_Esp, espaco(_, Vars_Esp)),
     nth0(1, Candidato, Perms_Cand), nth0(1, Perm_Soma_Esp, Perms_Esp),
     permutacoes_possiveis_aux(Vars_Esp, Vars_Cand, Perms_Esp, Perms_Cand, Poss),
-    inters_atual(Inters, Atual, Poss),
-    intersection(Poss, Atual, Aux), 
+    inters_atual(Inters, Atual, Poss), intersection(Poss, Atual, Aux), 
     percorre_perms_soma(Pos_Esp, Pos_Comuns, Perms_soma, Res, [Aux | Inters]).
 
 % -----------------------------------------------------------------------------
@@ -380,15 +372,18 @@ percorre_lst_perms(P, Perm, Comuns) :-
 % Significa que Res eh a lista que contem todos os Comuns.
 % -----------------------------------------------------------------------------
 comuns([P | Perms], Res) :-
-    findall(Comuns, 
-        (member(Perm, Perms), percorre_lst_perms(P, Perm, Comuns), Comuns \= []), 
-        Res).
+    member(Perm, Perms), percorre_lst_perms(P, Perm, Comuns), 
+    Res = Comuns.
 
 % -----------------------------------------------------------------------------
 %                           numeros_comuns/2
 % Significa que Numeros_Comuns eh uma lista de pares (pos, numero), significando
 % que todas as listas de Lst_Perms contem o numero "numero" na posicao "pos".
 % -----------------------------------------------------------------------------
+numeros_comuns([P], Numeros_comuns) :- 
+    length(P, N),
+    findall((Pos, Num), (between(1, N, Pos), nth1(Pos, P, Num)), Numeros_comuns), !.
+
 numeros_comuns(Lst_Perms, Numeros_comuns) :-
     comuns(Lst_Perms, Aux),
     length(Lst_Perms, Len_Perms), length(Aux, Len_Comuns),
@@ -396,12 +391,144 @@ numeros_comuns(Lst_Perms, Numeros_comuns) :-
     Numeros_comuns = [], !.
 
 numeros_comuns(Lst_Perms, Numeros_comuns) :-
-    comuns(Lst_Perms, Aux),    
-    nth0(0, Aux, P),
+    intersecao_comuns(Lst_Perms, Aux),
+    nth0(0, Aux, Comuns), 
     findall((Pos, Num), 
-        (member(Perm, Aux), P == Perm, member(Comuns, P), 
-        nth0(0, Comuns, Pos), nth0(1, Comuns, Num)), 
-        Res),
-    list_to_set(Res, Numeros_comuns).
+        (member(Mem, Comuns), 
+        nth0(0, Mem, Pos), nth0(1, Mem, Num)), 
+        Numeros_comuns), !.
 
-    
+intersecao_comuns(Lst_Perms, Res) :- intersecao_comuns(Lst_Perms, Res, []).
+
+intersecao_comuns(_, Inters, Inters).
+
+intersecao_comuns(Lst_Perms, Res, Inters) :-
+    comuns(Lst_Perms, Comuns), inters_atual(Inters, Atual, Comuns), 
+    intersection(Atual, Comuns, Aux), 
+    intersecao_comuns(Lst_Perms, Res, [Aux | Inters]).
+
+% -----------------------------------------------------------------------------
+%                           atribui_comuns
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+%                           comuns_para_lista/2
+% Predicado Auxiliar.
+% Significa que Lista_Comuns eh uma lista criada atraves dos numeros em comum
+% das permutacoes possiveis.
+% -----------------------------------------------------------------------------
+comuns_para_lista([], _).
+
+comuns_para_lista([Comum | Numeros_Comuns], Lista_Comuns) :-
+    Comum = (Pos, Subst), nth1(Pos, Lista_Comuns, Subst),
+    comuns_para_lista(Numeros_Comuns, Lista_Comuns).
+
+% -----------------------------------------------------------------------------
+%                           atribui/2
+% Predicado Auxiliar.
+% Significa que Vars fica atualizado com os Numeros_Comuns a atribuidos as posicoes
+% correspondentes.
+% -----------------------------------------------------------------------------
+atribui(Vars, Numeros_Comuns) :-
+    length(Vars, N), length(Lista_Comuns, N), 
+    comuns_para_lista(Numeros_Comuns, Lista_Comuns),
+    unifiable(Vars, Lista_Comuns, _), Vars = Lista_Comuns.
+
+% -----------------------------------------------------------------------------
+%                           atribui_comuns/1
+% Significa que Perms_Possiveis eh uma lista de permutacoes possiveis, que eh 
+% actualizada, atribuindo a cada espaco numeros comuns a todas as permutacoes 
+% possiveis para esse espaco.
+% -----------------------------------------------------------------------------
+atribui_comuns([]).
+
+atribui_comuns([P | Perms_Possiveis]) :-
+    nth0(0, P, Vars), nth0(1, P, Perms), numeros_comuns(Perms, Numeros_Comuns),
+    Numeros_Comuns \= [], atribui(Vars, Numeros_Comuns), 
+    atribui_comuns(Perms_Possiveis), !.
+
+atribui_comuns([P | Perms_Possiveis]) :-
+    nth0(1, P, Perms), numeros_comuns(Perms, Numeros_Comuns),
+    Numeros_Comuns == [], atribui_comuns(Perms_Possiveis).
+
+
+% -----------------------------------------------------------------------------
+%                           retira_impossiveis
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+%                           retira/3
+% Predicado Auxiliar.
+% Significa que Novas_Perms eh o resultado de tirar permutacoes impossiveis de 
+% Perms.
+% -----------------------------------------------------------------------------
+retira(_, [], []).
+
+retira(Vars, [P | Perms], [P | Novas_Perms]) :-
+    unifiable(Vars, P, _), retira(Vars, Perms, Novas_Perms).
+
+retira(Vars, [P | Perms], Novas_Perms) :-
+    \+ unifiable(Vars, P, _), retira(Vars, Perms, Novas_Perms).
+
+% -----------------------------------------------------------------------------
+%                           retira_impossiveis/2
+% Significa que Novas_Perms_Possiveis eh o resultado de tirar permutacoes
+% impossiveis de Perms_Possiveis.
+% -----------------------------------------------------------------------------
+retira_impossiveis([], []).
+
+retira_impossiveis([P | Perms_Possiveis], [P | Novas_Perms_Possiveis]) :-
+    nth0(0, P, Vars), nth0(1, P, Perms),
+    unifiable(Vars, Perms, _), 
+    retira_impossiveis(Perms_Possiveis, Novas_Perms_Possiveis).
+
+retira_impossiveis([P | Perms_Possiveis], [Novo_P | Novas_Perms_Possiveis]) :-
+    nth0(0, P, Vars), nth0(1, P, Perms),
+    \+ unifiable(Vars, Perms, _), retira(Vars, Perms, Novas_Perms),
+    Novo_P = [Vars, Novas_Perms],
+    retira_impossiveis(Perms_Possiveis, Novas_Perms_Possiveis), !.
+
+
+% -----------------------------------------------------------------------------
+%                           simplifica
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+%                           simplifica/2
+% Significa que Novas_Perms_Possiveis eh eh o resultado de simplificar 
+% Perms_Possiveis.
+% -----------------------------------------------------------------------------
+simplifica(Perms_Possiveis, Perms_Possiveis) :-
+    atribui_comuns(Perms_Possiveis), retira_impossiveis(Perms_Possiveis, Aux),
+    Perms_Possiveis == Aux, !.
+
+simplifica(Perms_Possiveis, Novas_Perms_Possiveis) :-
+    atribui_comuns(Perms_Possiveis), retira_impossiveis(Perms_Possiveis, Aux),
+    simplifica(Aux, Novas_Perms_Possiveis), !.
+
+
+% -----------------------------------------------------------------------------
+%                           inicializa
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+%                           inicializa/2
+% Significa que Perms_Possiveis eh a lista de permutacoes possiveis simplificada
+% para Puzzle.
+% -----------------------------------------------------------------------------
+inicializa(Puzzle, Perms_Possiveis) :-
+    espacos_puzzle(Puzzle, Espacos),
+    permutacoes_possiveis_espacos(Espacos, Aux),
+    simplifica(Aux, Perms_Possiveis), !.
+
+
+
+% :::::: PREDICADOS PARA A RESOLUCAO DE LISTAS DE PERMUTACOES POSSIVEIS :::::: %
+% -----------------------------------------------------------------------------
+%                           escolhe_menos_alternativas
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+%                           escolhe_menos_alternativas/2
+% Significa que Escolha eh o elemento de Perms_Possiveis escolhido segundo o 
+% criterio na Seccao 2.2, passo 1, do enunciado. Se todos os espacos em
+% Perms_Possiveis tiverem listas associadas de permutacoes unitarias, o predicado
+% devolve "false".
+% -----------------------------------------------------------------------------
+
+
