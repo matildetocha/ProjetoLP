@@ -2,6 +2,16 @@
 
 :- [codigo_comum].
 
+% ::::::::::::::::::::::: PREDICADOS AUXILIARES GERAIS ::::::::::::::::::::::: %     
+% -----------------------------------------------------------------------------
+%                           inters_atual/3
+% Significa que Atual eh ultima lista que foi intercetada com as listas anteriores.
+% -----------------------------------------------------------------------------  
+inters_atual([], Poss, Poss) :- !.
+
+inters_atual(Inters, Atual, _) :- nth0(0, Inters, Atual).
+
+
 
 % :::::::::::::::: PREDICADOS PARA A INICIALIZACAO DE PUZZLES :::::::::::::::: %                 
 
@@ -59,10 +69,10 @@ pos_listas_Fila(Fila, Posicoes) :-
 espaco(Fila, Posicoes, Pos_Somas, Vars_Esp) :- 
     espaco(Fila, Posicoes, Pos_Somas, Vars_Esp, [], []).
 
-espaco(_, [], Aux_Somas, Aux, Aux_Somas, Aux).
+espaco(_, [], Aux_Somas, Aux, Aux_Somas, Aux) :- !.
 
 espaco(Fila, [[_, Lst2]], Pos_Somas, Vars_Esp, Aux_Somas, Aux) :- 
-    length(Fila, Max), nth1(Max, Fila, Lst1), unifiable(Lst1, Lst2, []),
+    length(Fila, Max), nth1(Max, Fila, Lst1), unifiable(Lst1, Lst2, []), !,
     espaco(Fila, [], Pos_Somas, Vars_Esp, Aux_Somas, Aux).
 
 espaco(Fila, [[El, _]], Pos_Somas, Vars_Esp, Aux_Somas, Aux) :- 
@@ -73,7 +83,7 @@ espaco(Fila, [[El, _]], Pos_Somas, Vars_Esp, Aux_Somas, Aux) :-
 espaco(Fila, [El1, El2 | R], Pos_Somas, Vars_Esp, Aux_Somas, Aux) :-
     nth0(0, El1, Pos1), nth0(0, El2, Pos2),
     Min is Pos1 + 1, Max is Pos2 - 1,
-    Min < Max,
+    Min < Max, !,
     bagof(Membro, Indice^(between(Min, Max, Indice), nth1(Indice, Fila, Membro)), Vars),
     append([El2], R, New_R),
     espaco(Fila, New_R, Pos_Somas, Vars_Esp, [Pos1 | Aux_Somas] ,[Vars | Aux]).
@@ -81,7 +91,7 @@ espaco(Fila, [El1, El2 | R], Pos_Somas, Vars_Esp, Aux_Somas, Aux) :-
 espaco(Fila, [El1, El2 | R], Pos_Somas, Vars_Esp, Aux_Somas, Aux) :-
     nth0(0, El1, Pos1), nth0(0, El2, Pos2),
     Min is Pos1 + 1, Max is Pos2 - 1,
-    Min >= Max,
+    Min >= Max, !,
     append([El2], R, New_R),
     espaco(Fila, New_R, Pos_Somas, Vars_Esp, Aux_Somas, Aux).
 
@@ -182,7 +192,7 @@ espacos_com_posicoes_comuns_aux(Espacos, Esp, Esp_Pos_Comum) :-
 espacos_com_posicoes_comuns(Espacos, Esp, Esps_com) :-
     bagof(Esp_Pos_Comum, 
         espacos_com_posicoes_comuns_aux(Espacos, Esp, Esp_Pos_Comum), 
-        Esps_com).
+        Esps_com). 
 
 
 % -----------------------------------------------------------------------------
@@ -195,11 +205,11 @@ espacos_com_posicoes_comuns(Espacos, Esp, Esps_com) :-
 % Significa que Els eh a lista de inteiros menores que Soma. 
 % -----------------------------------------------------------------------------
 elementos_perm(Soma, Els) :-
-    Soma =< 9, Max is Soma - 1, 
-    findall(El, between(1, Max, El), Els), !.
+    Soma =< 9, !, Max is Soma - 1, 
+    findall(El, between(1, Max, El), Els).
 
 elementos_perm(Soma, Els) :-
-    Soma > 9, Els = [1, 2, 3, 4, 5, 6, 7, 8, 9].
+    Soma > 9, !, Els = [1, 2, 3, 4, 5, 6, 7, 8, 9].
 
 % -----------------------------------------------------------------------------
 %                           permutacoes_soma_espacos_aux/2
@@ -236,11 +246,11 @@ permutacoes_soma_espacos(Espacos, Perms_soma) :-
 posicoes_espacos_comuns(Espacos, Esps_Comuns, Pos_Comuns) :- 
     posicoes_espacos_comuns(Espacos, Esps_Comuns, Pos_Comuns, []), !.
 
-posicoes_espacos_comuns(_, [], Aux, Aux).
+posicoes_espacos_comuns(_, [], Aux, Aux) :- !.
 
 posicoes_espacos_comuns(Espacos, [Comum | Esps_Comuns], Pos_Comuns, Aux) :-
     length(Espacos, N), between(1, N, Pos), 
-    nth1(Pos, Espacos, Candidato), unifiable(Comum, Candidato, []),
+    nth1(Pos, Espacos, Candidato), unifiable(Comum, Candidato, []), !,
     posicoes_espacos_comuns(Espacos, Esps_Comuns, Pos_Comuns, [Pos | Aux]).
 
 % -----------------------------------------------------------------------------
@@ -250,15 +260,15 @@ posicoes_espacos_comuns(Espacos, [Comum | Esps_Comuns], Pos_Comuns, Aux) :-
 % -----------------------------------------------------------------------------  
 posicao_espaco(Espacos, Esp, Pos_Esp) :-
     length(Espacos, N), between(1, N, Pos), 
-    nth1(Pos, Espacos, Candidato), unifiable(Esp, Candidato, []), Pos_Esp = Pos, !.
+    nth1(Pos, Espacos, Candidato), unifiable(Esp, Candidato, []), !, Pos_Esp = Pos.
 
 % -----------------------------------------------------------------------------
 %                           permutacao_possivel/5
 % Predicado Auxiliar.
 % Significa que Perm_Poss eh uma possivel permutacao para o espaco Esp.
 % ----------------------------------------------------------------------------- 
-permutacao_possivel([P_Esp | _], Perms_Cand, Indice1, Indice2, Perm_Poss) :-
-    member(P_Cand, Perms_Cand), 
+permutacao_possivel([P_Esp | _], Perms_Cand, Indice1, Indice2, Perm_Poss) :- 
+    member(P_Cand, Perms_Cand),
     nth1(Indice1, P_Esp, Num1), nth1(Indice2, P_Cand, Num2), Num1 =:= Num2, 
     Perm_Poss = P_Esp.
 
@@ -274,20 +284,10 @@ permutacao_possivel([_ | Perms_Esp], Perms_Cand, Indice1, Indice2, Perm_Poss) :-
 permutacoes_possiveis_aux(Vars_Esp, Vars_Cand, Perms_Esp, Perms_Cand, Perms_Poss) :-
     length(Vars_Esp, N1), between(1, N1, Indice1), nth1(Indice1, Vars_Esp, V_Esp),
     length(Vars_Cand, N2), between(1, N2, Indice2), nth1(Indice2, Vars_Cand, V_Cand), 
-    unifiable(V_Esp, V_Cand, []),
+    unifiable(V_Esp, V_Cand, []), !,
     setof(Perm_Poss, 
         permutacao_possivel(Perms_Esp, Perms_Cand, Indice1, Indice2, Perm_Poss),
         Perms_Poss).
-
-% -----------------------------------------------------------------------------
-%                           inters_atual/3
-% Predicado Auxiliar.
-% Significa que Atual eh ultima lista de permutacoes possiveis, que foi 
-% intercetada com as listas de permutacoes possiveis anteriores.
-% -----------------------------------------------------------------------------  
-inters_atual([], Poss, Poss).
-
-inters_atual(Inters, Atual, _) :- nth0(0, Inters, Atual).
 
 % -----------------------------------------------------------------------------
 %                           percorre_perms_soma/4
@@ -298,7 +298,7 @@ inters_atual(Inters, Atual, _) :- nth0(0, Inters, Atual).
 percorre_perms_soma(Pos_Esp, [Pos | Pos_Comuns], Perms_soma, Res) :- 
     percorre_perms_soma(Pos_Esp, [Pos | Pos_Comuns], Perms_soma, Res, []).
 
-percorre_perms_soma(_, [], _, Inters, Inters).
+percorre_perms_soma(_, [], _, Inters, Inters) :- !.
 
 percorre_perms_soma(Pos_Esp, [Pos | Pos_Comuns], Perms_soma, Res, Inters) :-
     nth1(Pos, Perms_soma, Candidato), nth1(Pos_Esp, Perms_soma, Perm_Soma_Esp),
@@ -332,8 +332,8 @@ permutacao_possivel_espaco(Perm, Esp, Espacos, Perms_soma) :-
 permutacoes_possiveis_espaco(Espacos, Perms_soma, Esp, Perms_poss) :-
     Esp = espaco(_, Vars),
     findall(Perm, 
-        permutacao_possivel_espaco(Perm, Esp, Espacos, Perms_soma),
-        Aux),
+        permutacao_possivel_espaco(Perm, Esp, Espacos, Perms_soma), 
+        Aux), !,
     Perms_poss = [Vars, Aux].
 
 
@@ -349,7 +349,7 @@ permutacoes_possiveis_espacos(Espacos, Perms_poss_esps) :-
     bagof(Perms_poss, 
         Esp^(member(Esp, Espacos), 
         permutacoes_possiveis_espaco(Espacos, Perms_soma, Esp, Perms_poss)),
-        Perms_poss_esps).
+        Perms_poss_esps), !.
 
 
 % -----------------------------------------------------------------------------
@@ -364,16 +364,32 @@ permutacoes_possiveis_espacos(Espacos, Perms_poss_esps) :-
 percorre_lst_perms(P, Perm, Comuns) :-
     length(P, N),
     findall([Pos, Num], (between(1, N, Pos), nth1(Pos, P, Num), nth1(Pos, Perm, Candidato),
-        Num =:= Candidato), Comuns).
+        Num =:= Candidato), Comuns), !.
 
 % -----------------------------------------------------------------------------
 %                           comuns/2
 % Predicado Auxiliar
-% Significa que Res eh a lista que contem todos os Comuns.
+% Significa que Res eh a lista que contem todos os Comuns com a primeira permutacao.
 % -----------------------------------------------------------------------------
 comuns([P | Perms], Res) :-
-    member(Perm, Perms), percorre_lst_perms(P, Perm, Comuns), 
-    Res = Comuns.
+    findall(Comuns, (member(Perm, Perms), percorre_lst_perms(P, Perm, Comuns)), 
+        Res).
+
+% -----------------------------------------------------------------------------
+%                           intersecao_comuns/3
+% Predicado Auxiliar
+% Significa que Res eh a lista que contem as listas de todos os Comuns intersetados, 
+% sendo o primeiro elemento desta a lista de comuns a todas as permutacoes.
+% -----------------------------------------------------------------------------
+intersecao_comuns(Lst_Perms, Comuns, Res) :- 
+    intersecao_comuns(Lst_Perms, Comuns, Res, []).
+
+intersecao_comuns(_, [], Inters, Inters) :- !.
+
+intersecao_comuns(Lst_Perms, [C | Comuns], Res, Inters) :-
+    inters_atual(Inters, Atual, C), 
+    intersection(Atual, C, Aux), 
+    intersecao_comuns(Lst_Perms, Comuns, Res, [Aux | Inters]).
 
 % -----------------------------------------------------------------------------
 %                           numeros_comuns/2
@@ -385,27 +401,18 @@ numeros_comuns([P], Numeros_comuns) :-
     findall((Pos, Num), (between(1, N, Pos), nth1(Pos, P, Num)), Numeros_comuns), !.
 
 numeros_comuns(Lst_Perms, Numeros_comuns) :-
-    comuns(Lst_Perms, Aux),
-    length(Lst_Perms, Len_Perms), length(Aux, Len_Comuns),
-    Limite is Len_Perms - 1,  Len_Comuns < Limite,              % basta 1 falhar para nao ter numeros comuns. 
-    Numeros_comuns = [], !.
+    comuns(Lst_Perms, Todos_os_comuns),
+    intersecao_comuns(Lst_Perms, Todos_os_comuns, Aux),
+    nth0(0, Aux, Comuns), Comuns == [], !, Numeros_comuns = [].
 
 numeros_comuns(Lst_Perms, Numeros_comuns) :-
-    intersecao_comuns(Lst_Perms, Aux),
+    comuns(Lst_Perms, Todos_os_comuns),
+    intersecao_comuns(Lst_Perms, Todos_os_comuns, Aux),
     nth0(0, Aux, Comuns), 
     findall((Pos, Num), 
-        (member(Mem, Comuns), 
-        nth0(0, Mem, Pos), nth0(1, Mem, Num)), 
+        (member(Mem, Comuns), nth0(0, Mem, Pos), nth0(1, Mem, Num)), 
         Numeros_comuns), !.
 
-intersecao_comuns(Lst_Perms, Res) :- intersecao_comuns(Lst_Perms, Res, []).
-
-intersecao_comuns(_, Inters, Inters).
-
-intersecao_comuns(Lst_Perms, Res, Inters) :-
-    comuns(Lst_Perms, Comuns), inters_atual(Inters, Atual, Comuns), 
-    intersection(Atual, Comuns, Aux), 
-    intersecao_comuns(Lst_Perms, Res, [Aux | Inters]).
 
 % -----------------------------------------------------------------------------
 %                           atribui_comuns
@@ -416,7 +423,7 @@ intersecao_comuns(Lst_Perms, Res, Inters) :-
 % Significa que Lista_Comuns eh uma lista criada atraves dos numeros em comum
 % das permutacoes possiveis.
 % -----------------------------------------------------------------------------
-comuns_para_lista([], _).
+comuns_para_lista([], _) :- !.
 
 comuns_para_lista([Comum | Numeros_Comuns], Lista_Comuns) :-
     Comum = (Pos, Subst), nth1(Pos, Lista_Comuns, Subst),
@@ -431,7 +438,7 @@ comuns_para_lista([Comum | Numeros_Comuns], Lista_Comuns) :-
 atribui(Vars, Numeros_Comuns) :-
     length(Vars, N), length(Lista_Comuns, N), 
     comuns_para_lista(Numeros_Comuns, Lista_Comuns),
-    unifiable(Vars, Lista_Comuns, _), Vars = Lista_Comuns.
+    unifiable(Vars, Lista_Comuns, _), !, Vars = Lista_Comuns.
 
 % -----------------------------------------------------------------------------
 %                           atribui_comuns/1
@@ -439,16 +446,16 @@ atribui(Vars, Numeros_Comuns) :-
 % actualizada, atribuindo a cada espaco numeros comuns a todas as permutacoes 
 % possiveis para esse espaco.
 % -----------------------------------------------------------------------------
-atribui_comuns([]).
+atribui_comuns([]) :- !.
 
 atribui_comuns([P | Perms_Possiveis]) :-
     nth0(0, P, Vars), nth0(1, P, Perms), numeros_comuns(Perms, Numeros_Comuns),
-    Numeros_Comuns \= [], atribui(Vars, Numeros_Comuns), 
-    atribui_comuns(Perms_Possiveis), !.
+    Numeros_Comuns \= [], !, atribui(Vars, Numeros_Comuns), 
+    atribui_comuns(Perms_Possiveis).
 
 atribui_comuns([P | Perms_Possiveis]) :-
     nth0(1, P, Perms), numeros_comuns(Perms, Numeros_Comuns),
-    Numeros_Comuns == [], atribui_comuns(Perms_Possiveis).
+    Numeros_Comuns == [], !, atribui_comuns(Perms_Possiveis).
 
 
 % -----------------------------------------------------------------------------
@@ -460,29 +467,29 @@ atribui_comuns([P | Perms_Possiveis]) :-
 % Significa que Novas_Perms eh o resultado de tirar permutacoes impossiveis de 
 % Perms.
 % -----------------------------------------------------------------------------
-retira(_, [], []).
+retira(_, [], []) :- !.
 
 retira(Vars, [P | Perms], [P | Novas_Perms]) :-
-    unifiable(Vars, P, _), retira(Vars, Perms, Novas_Perms).
+    unifiable(Vars, P, _), !, retira(Vars, Perms, Novas_Perms).
 
 retira(Vars, [P | Perms], Novas_Perms) :-
-    \+ unifiable(Vars, P, _), retira(Vars, Perms, Novas_Perms).
+    \+ unifiable(Vars, P, _), !, retira(Vars, Perms, Novas_Perms).
 
 % -----------------------------------------------------------------------------
 %                           retira_impossiveis/2
 % Significa que Novas_Perms_Possiveis eh o resultado de tirar permutacoes
 % impossiveis de Perms_Possiveis.
 % -----------------------------------------------------------------------------
-retira_impossiveis([], []).
+retira_impossiveis([], []) :- !.
 
 retira_impossiveis([P | Perms_Possiveis], [P | Novas_Perms_Possiveis]) :-
     nth0(0, P, Vars), nth0(1, P, Perms),
-    unifiable(Vars, Perms, _), 
+    unifiable(Vars, Perms, _), !,
     retira_impossiveis(Perms_Possiveis, Novas_Perms_Possiveis).
 
 retira_impossiveis([P | Perms_Possiveis], [Novo_P | Novas_Perms_Possiveis]) :-
     nth0(0, P, Vars), nth0(1, P, Perms),
-    \+ unifiable(Vars, Perms, _), retira(Vars, Perms, Novas_Perms),
+    \+ unifiable(Vars, Perms, _), !, retira(Vars, Perms, Novas_Perms),
     Novo_P = [Vars, Novas_Perms],
     retira_impossiveis(Perms_Possiveis, Novas_Perms_Possiveis), !.
 
@@ -524,11 +531,119 @@ inicializa(Puzzle, Perms_Possiveis) :-
 %                           escolhe_menos_alternativas
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
+%                           menos_alternativas/2
+% Significa que Menos_Alternativas eh a lista resultado de retirar os espacos
+% associados a listas de permutacoes unitarias.
+% -----------------------------------------------------------------------------
+menos_alternativas([], []). 
+
+menos_alternativas([P | Perms_Possiveis], [Perms | Menos_alternativas]) :-
+    nth0(0, P, Vars), nth0(1, P, Perms), member(V, Vars), var(V), !,
+    menos_alternativas(Perms_Possiveis, Menos_alternativas).
+
+menos_alternativas([P | Perms_Possiveis], Menos_alternativas) :-
+    nth0(0, P, Vars), member(V, Vars), nonvar(V), !,
+    menos_alternativas(Perms_Possiveis, Menos_alternativas).
+
+
+% -----------------------------------------------------------------------------
+%                           perms_por_length/2
+% Significa que Menos_Alternativas_ord eh a lista resultado de ordenar as 
+% permutacoes por ordem de tamanho, da menor para a maior.
+% -----------------------------------------------------------------------------
+perms_por_length(Menos_alternativas, Menos_alternativas_ord) :-
+    map_list_to_pairs(length, Menos_alternativas, Pares),
+    keysort(Pares, Aux),
+    pairs_values(Aux, Menos_alternativas_ord).
+
+% -----------------------------------------------------------------------------
+%                           escolhe/3
+% Significa que Escolha eh o elemento de Perms_Possiveis escolhido segundo o 
+% criterio na Seccao 2.2, passo 1, do enunciado.
+% -----------------------------------------------------------------------------
+escolhe(_, [], _) :- !.
+
+escolhe(Perms_Possiveis, [M | _], Escolha) :-
+    member(Mem, Perms_Possiveis), Mem = [_, Lst_Perms], 
+    Lst_Perms == M, !, Escolha = Mem.
+
+escolhe(Perms_Possiveis, [_ | Menos_alternativas_ord], Escolha) :-
+    escolhe(Perms_Possiveis, Menos_alternativas_ord, Escolha).
+
+% -----------------------------------------------------------------------------
 %                           escolhe_menos_alternativas/2
 % Significa que Escolha eh o elemento de Perms_Possiveis escolhido segundo o 
 % criterio na Seccao 2.2, passo 1, do enunciado. Se todos os espacos em
 % Perms_Possiveis tiverem listas associadas de permutacoes unitarias, o predicado
 % devolve "false".
 % -----------------------------------------------------------------------------
+escolhe_menos_alternativas(Perms_Possiveis, _) :-
+    menos_alternativas(Perms_Possiveis, Menos_alternativas), 
+    Menos_alternativas == [], fail.
+
+escolhe_menos_alternativas(Perms_Possiveis, Escolha) :-
+    menos_alternativas(Perms_Possiveis, Menos_alternativas), 
+    Menos_alternativas \= [],
+    perms_por_length(Menos_alternativas, Menos_alternativas_ord),
+    escolhe(Perms_Possiveis, Menos_alternativas_ord, Escolha).
 
 
+% -----------------------------------------------------------------------------
+%                           experimenta_perm
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+%                           experimenta_perm/3
+% 
+% -----------------------------------------------------------------------------
+experimenta_perm(_, [], []) :- !.
+
+experimenta_perm(Escolha, [P | Perms_Possiveis], [[Esp, [Perm]] | Novas_Perms_Possiveis]) :-
+    Escolha = [Esp, Lst_Perms], nth0(1, P, Perms), Lst_Perms == Perms, !,
+    member(Perm, Lst_Perms), Esp = Perm,  
+    experimenta_perm(Escolha, Perms_Possiveis, Novas_Perms_Possiveis).
+
+experimenta_perm(Escolha, [P | Perms_Possiveis], [P | Novas_Perms_Possiveis]) :-
+    Escolha = [_, Lst_Perms], nth0(1, P, Perms), Lst_Perms \= Perms, !,
+    experimenta_perm(Escolha, Perms_Possiveis, Novas_Perms_Possiveis).
+
+% -----------------------------------------------------------------------------
+%                           resolve_aux
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+%                           nao_resolvido/2
+% Devolve "false" caso todos os espacos de Perms_Possiveis tiverem associados a 
+% listas de permutacoes unitarias e "true" em caso contrario.
+% -----------------------------------------------------------------------------
+nao_resolvido([_ | Perms_Possiveis]) :-
+    nao_resolvido(Perms_Possiveis), !.
+
+nao_resolvido([P | _]) :-
+    nth0(0, P, Vars), member(V, Vars), var(V), !.
+
+% -----------------------------------------------------------------------------
+%                           resolve_aux/2
+% Significa que Novas_Perms_Possiveis eh o resultado de aplicar o algoritmo
+% descrito na Seccao 2.2, do enunciado, a Perms_Possiveis.
+% -----------------------------------------------------------------------------
+resolve_aux(Perms_Possiveis, Novas_Perms_Possiveis) :- 
+    escolhe_menos_alternativas(Perms_Possiveis, Escolha), !,
+    experimenta_perm(Escolha, Perms_Possiveis, Candidato),
+    retira_impossiveis(Candidato, Aux), 
+    resolve_aux(Aux, Novas_Perms_Possiveis).
+
+resolve_aux(Perms_Possiveis, Perms_Possiveis) :- !,
+    \+ nao_resolvido(Perms_Possiveis), !.
+
+
+
+% :::::::::::::::::: PREDICADOS PARA A RESOLUCAO DE PUZZLES ::::::::::::::::: %
+% -----------------------------------------------------------------------------
+%                           resolve
+% -----------------------------------------------------------------------------
+% -----------------------------------------------------------------------------
+%                           resolve/1
+% Resolve o puzzle introduzido, substituindo todas as variaveis por numeros que
+% respeitam as restricoes Puz.
+% -----------------------------------------------------------------------------
+resolve(Puz) :-
+    inicializa(Puz, Perms_Possiveis), resolve_aux(Perms_Possiveis, _).
