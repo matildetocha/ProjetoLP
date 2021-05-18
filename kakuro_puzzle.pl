@@ -5,7 +5,7 @@
 % ::::::::::::::::::::::: PREDICADOS AUXILIARES GERAIS ::::::::::::::::::::::: %     
 % -----------------------------------------------------------------------------
 %                           inters_atual/3
-% Significa que Atual eh ultima lista que foi intercetada com as listas anteriores.
+% Significa que Atual eh a ultima lista que foi intercetada com as listas anteriores.
 % -----------------------------------------------------------------------------  
 inters_atual([], Poss, Poss) :- !.
 
@@ -21,7 +21,7 @@ inters_atual(Inters, Atual, _) :- nth0(0, Inters, Atual).
 % -----------------------------------------------------------------------------
 %                           combinacoes_soma/4
 % Significa que Combs eh a lista ordenada cujos elementos sao as combinacoes 
-% N a N, dos elementos de Els cuja soma e Soma.
+% N a N, dos elementos de Els cuja soma eh Soma.
 % -----------------------------------------------------------------------------
 combinacoes_soma(N, Els, Soma, Combs) :-
     findall(Comb, 
@@ -98,7 +98,7 @@ espaco(Fila, [El1, El2 | R], Pos_Somas, Vars_Esp, Aux_Somas, Aux) :-
 % -----------------------------------------------------------------------------
 %                            somas_H_V/4
 % Predicado Auxiliar.
-% Significa Somas eh uma lista cujos elementos sao as somas da fila, 
+% Significa que Somas eh uma lista cujos elementos sao as somas da fila, 
 % conforme se trate de uma fila horizontal ou vertical.
 % -----------------------------------------------------------------------------
 somas_H_V(v, Posicoes, Fila, Somas) :-
@@ -201,7 +201,7 @@ espacos_com_posicoes_comuns(Espacos, Esp, Esps_com) :-
 % -----------------------------------------------------------------------------
 %                           elementos_perm/2
 % Predicado Auxiliar. Serve para aumentar a eficiencia do codigo, visto que a 
-% soma, com numeros acima ou iguais ah Soma , nunca sera igual a Soma. 
+% soma, com numeros acima ou iguais ah Soma, nunca sera igual a Soma. 
 % Significa que Els eh a lista de inteiros menores que Soma. 
 % -----------------------------------------------------------------------------
 elementos_perm(Soma, Els) :-
@@ -316,7 +316,7 @@ permutacao_possivel_espaco(Perm, Esp, Espacos, Perms_soma) :-
     espacos_com_posicoes_comuns(Espacos, Esp, Esps_Comuns), 
     posicoes_espacos_comuns(Espacos, Esps_Comuns, Pos_Comuns), 
     posicao_espaco(Espacos, Esp, Pos_Esp), 
-    percorre_perms_soma(Pos_Esp, Pos_Comuns, Perms_soma, Aux),
+    percorre_perms_soma(Pos_Esp, Pos_Comuns, Perms_soma, Aux), 
     nth0(0, Aux, Perms_Poss), member(Perm, Perms_Poss).
 
 
@@ -325,7 +325,7 @@ permutacao_possivel_espaco(Perm, Esp, Espacos, Perms_soma) :-
 % ----------------------------------------------------------------------------- 
 % -----------------------------------------------------------------------------
 %                           permutacoes_possiveis_espaco/4
-% Significa que Perms_poss eh umas lista de 2 elementos em que o primeiro eh a
+% Significa que Perms_poss eh uma lista de 2 elementos em que o primeiro eh a
 % lista de variaveis de Esp e o segundo eh a lista ordenada de permutacoes
 % possiveis para o espaco Esp.
 % ----------------------------------------------------------------------------- 
@@ -345,11 +345,11 @@ permutacoes_possiveis_espaco(Espacos, Perms_soma, Esp, Perms_poss) :-
 % Significa que Perms_poss_esps eh a lista de permutacoes possiveis.
 % ----------------------------------------------------------------------------- 
 permutacoes_possiveis_espacos(Espacos, Perms_poss_esps) :-
-    permutacoes_soma_espacos(Espacos, Perms_soma),
+    permutacoes_soma_espacos(Espacos, Perms_soma), !,
     bagof(Perms_poss, 
         Esp^(member(Esp, Espacos), 
         permutacoes_possiveis_espaco(Espacos, Perms_soma, Esp, Perms_poss)),
-        Perms_poss_esps), !.
+    Perms_poss_esps).
 
 
 % -----------------------------------------------------------------------------
@@ -499,7 +499,7 @@ retira_impossiveis([P | Perms_Possiveis], [Novo_P | Novas_Perms_Possiveis]) :-
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 %                           simplifica/2
-% Significa que Novas_Perms_Possiveis eh eh o resultado de simplificar 
+% Significa que Novas_Perms_Possiveis eh o resultado de simplificar 
 % Perms_Possiveis.
 % -----------------------------------------------------------------------------
 simplifica(Perms_Possiveis, Perms_Possiveis) :-
@@ -532,6 +532,7 @@ inicializa(Puzzle, Perms_Possiveis) :-
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 %                           menos_alternativas/2
+% Predicado Auxiliar.
 % Significa que Menos_Alternativas eh a lista resultado de retirar os espacos
 % associados a listas de permutacoes unitarias.
 % -----------------------------------------------------------------------------
@@ -548,6 +549,7 @@ menos_alternativas([P | Perms_Possiveis], Menos_alternativas) :-
 
 % -----------------------------------------------------------------------------
 %                           perms_por_length/2
+% Predicado Auxiliar.
 % Significa que Menos_Alternativas_ord eh a lista resultado de ordenar as 
 % permutacoes por ordem de tamanho, da menor para a maior.
 % -----------------------------------------------------------------------------
@@ -558,6 +560,7 @@ perms_por_length(Menos_alternativas, Menos_alternativas_ord) :-
 
 % -----------------------------------------------------------------------------
 %                           escolhe/3
+% Predicado Auxiliar.
 % Significa que Escolha eh o elemento de Perms_Possiveis escolhido segundo o 
 % criterio na Seccao 2.2, passo 1, do enunciado.
 % -----------------------------------------------------------------------------
@@ -593,7 +596,8 @@ escolhe_menos_alternativas(Perms_Possiveis, Escolha) :-
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 %                           experimenta_perm/3
-% 
+% Significa que Novas_Perms_Possiveis eh o resultado de substituir, em 
+% Perms_Possiveis, o elemento Escolha pelo elemento [Esp, [Perm]].
 % -----------------------------------------------------------------------------
 experimenta_perm(_, [], []) :- !.
 
@@ -611,6 +615,7 @@ experimenta_perm(Escolha, [P | Perms_Possiveis], [P | Novas_Perms_Possiveis]) :-
 % -----------------------------------------------------------------------------
 % -----------------------------------------------------------------------------
 %                           nao_resolvido/2
+% Predicado Auxiliar.
 % Devolve "false" caso todos os espacos de Perms_Possiveis tiverem associados a 
 % listas de permutacoes unitarias e "true" em caso contrario.
 % -----------------------------------------------------------------------------
